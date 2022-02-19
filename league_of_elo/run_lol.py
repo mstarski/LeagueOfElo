@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
-from league_of_elo.elo import league, rating_system
-from league_of_elo.get_league_data import Leaguepedia_DB
+from .elo import league, rating_system
+from .get_league_data import Leaguepedia_DB
 from typing import Dict
 from time import strftime
 from pathlib import Path
 import argparse
 import re
 import pickle
+import os
 
 
 SRC_PATH = Path(__file__).resolve().parent
@@ -49,11 +50,13 @@ class DataCache():
 
     def getMatchResults(self, season, force_fetch=False):
         results_file = Path(CACHE_PATH / 'results' / f'{season}.p')
+        os.makedirs(os.path.dirname(results_file), exist_ok=True)
+
         if results_file.is_file() and not force_fetch:
             results = pickle.load(open(results_file, 'rb'))
-            #print(f'Using cached: {season}')
+            # print(f'Using cached: {season}')
         else:
-            print(f'Fetching: {season}')
+            # print(f'Fetching: {season}')
             if not self.lpdb:
                 self.lpdb_connect()
             results = self.lpdb.getSeasonResults(season)
@@ -61,7 +64,7 @@ class DataCache():
         return results
 
 
-def runMultiRegion(model, region, stop_date, no_open):
+def runMultiRegion(region, model = rating_system.Elo, stop_date = strftime('%Y-%m-%d')):
     regions = ['NA', 'EU', 'KR', 'CN', 'INT'] if region == 'INT' else [region]
     start_year = 2010
     rating_model = model()
@@ -76,7 +79,7 @@ def runMultiRegion(model, region, stop_date, no_open):
 
     split = None
     split_transitions = []
-    print(season_list)
+
     for season in season_list:
         # Declare new season when split transitions between any of the following
         new_split = re.search('(Spring|Summer|MSI|Worlds|Mid-Season Cup|Lock In)', season)
@@ -88,12 +91,13 @@ def runMultiRegion(model, region, stop_date, no_open):
     last_year = None
     split = None
     force_fetch = False
+
     for season in season_list:
         # Declare new season when split transitions between any of the following
         if season in split_transitions:
-            year = re.search('\d\d\d\d', season)[0]
-            split = re.search('(Spring|Summer|MSI|Worlds|Mid-Season Cup|Lock In)', season)[0]
-            print(f'{year} {split}')
+            year = re.search(r'\d\d\d\d', season)[0]
+            split = re.search(r'(Spring|Summer|MSI|Worlds|Mid-Season Cup|Lock In)', season)[0]
+            # print(f'{year} {split}')
             if year != last_year or split == 'Summer':
                 rating_league.newSeasonReset(f'{year} {split}', rating_reset=True)
             else:
@@ -101,12 +105,13 @@ def runMultiRegion(model, region, stop_date, no_open):
             if season == split_transitions[-1]:
                 force_fetch = True
             last_year = year
-        #rating_league.loadRosters(lpdb.getSeasonRosters(season))
         results = cache.getMatchResults(season, force_fetch=force_fetch)
-        #print(season, len(results))
         rating_league.loadGames(results, 'Playoffs' in season)
-    rating_league.printStats()
-    rating_league.genPlots(DOCS_PATH, no_open)
+
+    result = rating_league.genResult()
+    # print(result)
+    return result
+
 
 def parseArgs() -> Dict:
     parser = argparse.ArgumentParser()
@@ -119,6 +124,7 @@ def parseArgs() -> Dict:
                         help='Use the naive rating system rather than Elo')
     parser.add_argument('--no_open', '-n', action='store_true',
                         help='Don\'t automatically open the graph')
+
     return vars(parser.parse_args())
 
 
@@ -126,7 +132,7 @@ if __name__ == '__main__':
     args = parseArgs()
     if args['region'] == 'ALL':
         for region in TEAMFILES:
-            print(f'Running {region}')
+            # print(f'Running {region}')
             args['region'] = region
             runMultiRegion(**args)
     else:

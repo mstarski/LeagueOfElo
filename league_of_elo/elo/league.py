@@ -58,7 +58,7 @@ class League(object):
                     t1 = self._getTeam(team_name=t1)
                     t2 = self._getTeam(team_name=t2)
             except ValueError:
-                print(f"Unknown team. Ignoring match. {t1}, {t2}")
+                # print(f"Unknown team. Ignoring match. {t1}, {t2}")
                 continue
 
             winloss_args = (t1.getRating(), t2.getRating(), int(t1s), int(t2s))
@@ -71,7 +71,7 @@ class League(object):
 
     def newSeasonReset(self, season_name, rating_reset=None):
         try:
-            self.seasons.append(season_name[re.search('\d\d\d\d', season_name).start():])
+            self.seasons.append(season_name[re.search(r'\d\d\d\d', season_name).start():])
         except:
             self.seasons.append(season_name)
         self._align()
@@ -87,11 +87,18 @@ class League(object):
         print(self.rating_system.getBrier())
         print(self.rating_system.getUpDown())
 
-    def genPlots(self, docs_path, no_open):
+    def genResult(self):
         self._align()
+
         data, colors, seasons = self._exportData()
-        #EloPlotter.matplotlib_plot(self.league_name, data, colors)
-        EloPlotter.plotly_plot(self.league_name, data, colors, seasons, docs_path, no_open)
+        result = {}
+
+        for team, rating_hist in data.items():
+            end_rating = rating_hist[-1][-1]
+            result[team] = end_rating
+        
+        return result
+
 
 ## Private
     def _addTeam(self, team_info, region='Default'):

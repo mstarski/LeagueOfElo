@@ -1,11 +1,8 @@
 import mwclient
-from .leaguepedia_login import login, key
-
 
 class Leaguepedia_DB(object):
     def __init__(self):
         self.lpdb = mwclient.Site('lol.fandom.com', path='/')
-        self.lpdb.login(login, key)
 
     def _query(self, query_dict):
         response = self.lpdb.api('cargoquery',
@@ -108,7 +105,6 @@ class Leaguepedia_DB(object):
 
 if __name__ == '__main__':
     from pprint import pprint
+
     lpdb = Leaguepedia_DB()
-    #pprint(lpdb.getRegions())
-    #pprint(lpdb.getTournaments('INT', '2010-01-01'))
     pprint(lpdb.getSeasonResults('LPL 2017 Summer Playoffs'))
