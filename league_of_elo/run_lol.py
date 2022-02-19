@@ -2,6 +2,7 @@
 
 from .elo import league, rating_system
 from .get_league_data import Leaguepedia_DB
+
 from typing import Dict
 from time import strftime
 from pathlib import Path
@@ -122,14 +123,15 @@ def parseArgs() -> Dict:
     parser.add_argument('--naive_model', dest='model', action='store_const',
                         const=rating_system.Naive, default=rating_system.Elo,
                         help='Use the naive rating system rather than Elo')
-    parser.add_argument('--no_open', '-n', action='store_true',
-                        help='Don\'t automatically open the graph')
 
     return vars(parser.parse_args())
 
 
 if __name__ == '__main__':
     args = parseArgs()
+
+    print(args)
+
     if args['region'] == 'ALL':
         for region in TEAMFILES:
             # print(f'Running {region}')
