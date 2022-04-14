@@ -95,12 +95,15 @@ class League(object):
 
         for team, rating_hist in data.items():
             end_rating = rating_hist[-1][-1]
-            result[team] = end_rating
+            full_name = self._getNameFromAbbrev(team)
+            result[full_name] = {}
+            result[full_name]['rating'] = end_rating
+            result[full_name]['abbrev'] = team 
         
         return result
 
 
-## Private
+    ## Private
     def _addTeam(self, team_info, region='Default'):
         try:
             existing_team = self._getTeam(team_id=team_info.id)
@@ -109,6 +112,11 @@ class League(object):
             self.teams[team_info.id] = Team(*team_info)
         else:
             existing_team.names.extend([team_info.name, team_info.abbrev])
+
+    def _getNameFromAbbrev(self, abbrev):
+        for id in self.teams:
+            if self.teams[id].abbrev == abbrev:
+                return self.teams[id].name
 
     def _getTeam(self, team_name=None, team_id=None, default=None):
         team = self.teams.get(team_name)
@@ -143,6 +151,7 @@ class League(object):
         data = {}
         inactive = {}
         colors = {}
+
         for _, team in sorted(self.teams.items(), key=lambda item: item[1].getRating()):
             abbrev = team.abbrev
             colors[abbrev] = team.color
